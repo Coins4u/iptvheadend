@@ -11,9 +11,9 @@ import { parsePaymentPageParams } from "../../../lib/payment-method";
 import { fetchEurUsdtRate, formatUsdt } from "../../../lib/usdt-rate";
 
 export const metadata: Metadata = {
-  title: "Cryptocurrency Payment | GiGa FliX",
+  title: "Cryptocurrency Payment | IPTV Headend",
   description:
-    "Complete your GiGa FliX order by sending USDT (BEP20) for the discounted euro total. Reply with your receipt after payment.",
+    "Complete your IPTV Headend order by sending USDT (BEP20) for the discounted euro total. Reply with your receipt after payment.",
   robots: { index: false, follow: false },
 };
 

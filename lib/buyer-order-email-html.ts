@@ -3,25 +3,25 @@
  * Includes a conditional payment-details button based on the method chosen
  * in the order form (placeholder URLs until those pages are live).
  * Table layout + inline styles for broad client support.
- * Colors align with app/globals.css :root (GiGa FliX brand).
+ * Colors align with app/globals.css :root (IPTV Headend brand).
  */
 
 import type { SelectablePaymentMethod } from "./payment-method";
 
 /** Mirrors :root in globals.css — keep in sync when rebranding */
 const C = {
-  primary: "#2c1596",
-  primaryDark: "#1b0d5f",
+  primary: "#0d5c45",
+  primaryDark: "#083d2e",
   bgPage: "#f5f5f7",
   bgCard: "#ffffff",
   text: "#111111",
   textGray: "#4b5563",
   border: "#e5e7eb",
-  alertBg: "#f3f1ff",
-  alertBorder: "#c7bfff",
+  alertBg: "#eef8f3",
+  alertBorder: "#aee0c9",
   headerSub: "rgba(255,255,255,0.92)",
   headerInvoice: "rgba(255,255,255,0.85)",
-  linkOnWhite: "#2c1596",
+  linkOnWhite: "#0d5c45",
 } as const;
 
 /**
@@ -727,6 +727,87 @@ function withMethod(template: string, method: string): string {
   return template.replace(/\{method\}/g, method);
 }
 
+/** Bank-transfer emails: ask the customer to reply — never include IBAN/account details. */
+function bankTransferReplyInstruction(
+  locale: BuyerLocale,
+  fullName: string,
+): string {
+  const name = fullName.trim() || "there";
+  switch (locale) {
+    case "fr":
+      return `Bonjour ${name}, merci pour votre commande ! Pour finaliser le paiement de votre abonnement IPTV Headend par virement bancaire, répondez directement à cet e-mail afin de confirmer votre commande et recevoir vos coordonnées bancaires sécurisées.`;
+    case "de":
+      return `Hallo ${name}, vielen Dank für Ihre Bestellung! Um die Zahlung für Ihr IPTV-Headend-Abo per Banküberweisung abzuschließen, antworten Sie bitte direkt auf diese E-Mail, um Ihre Bestellung zu bestätigen und Ihre sicheren Bankdaten zu erhalten.`;
+    case "it":
+      return `Ciao ${name}, grazie per l'ordine! Per completare il pagamento del tuo abbonamento IPTV Headend tramite bonifico, rispondi direttamente a questa email per confermare l'ordine e ricevere i dettagli bancari in modo sicuro.`;
+    case "nl":
+      return `Hallo ${name}, bedankt voor je bestelling! Om je IPTV Headend-abonnement via bankoverschrijving te betalen, beantwoord deze e-mail rechtstreeks om je bestelling te bevestigen en je veilige bankgegevens te ontvangen.`;
+    case "pt":
+      return `Olá ${name}, obrigado pelo seu pedido! Para concluir o pagamento da sua assinatura IPTV Headend por transferência bancária, responda diretamente a este e-mail para confirmar o pedido e receber os dados bancários de forma segura.`;
+    case "es":
+      return `Hola ${name}, ¡gracias por tu pedido! Para completar el pago de tu suscripción IPTV Headend por transferencia bancaria, responde directamente a este correo para confirmar el pedido y recibir tus datos bancarios de forma segura.`;
+    case "no":
+      return `Hei ${name}, takk for bestillingen! For å fullføre betalingen for IPTV Headend-abonnementet ditt via bankoverføring, svar direkte på denne e-posten for å bekrefte bestillingen og motta sikre bankdetaljer.`;
+    case "en":
+    default:
+      return `Hi ${name}, thank you for your order! To complete your payment for your IPTV Headend subscription via bank transfer, please reply directly to this email to confirm your order and receive your secure bank payment details.`;
+  }
+}
+
+function bankTransferNextSteps(locale: BuyerLocale): [string, string, string] {
+  switch (locale) {
+    case "fr":
+      return [
+        "Répondez à cet e-mail pour confirmer votre commande.",
+        "Nous vous enverrons les coordonnées bancaires en réponse privée.",
+        "Effectuez le virement du montant final remisé, puis renvoyez un reçu dans le même fil.",
+      ];
+    case "de":
+      return [
+        "Antworten Sie auf diese E-Mail, um Ihre Bestellung zu bestätigen.",
+        "Wir senden Ihnen die Bankdaten in einer privaten Antwort.",
+        "Überweisen Sie den finalen Rabattbetrag und antworten Sie mit einem Beleg im selben Thread.",
+      ];
+    case "it":
+      return [
+        "Rispondi a questa email per confermare l'ordine.",
+        "Ti invieremo i dettagli bancari in una risposta privata.",
+        "Effettua il bonifico dell'importo scontato finale, poi rispondi con la ricevuta nello stesso thread.",
+      ];
+    case "nl":
+      return [
+        "Beantwoord deze e-mail om je bestelling te bevestigen.",
+        "Wij sturen je bankgegevens via een privéantwoord.",
+        "Maak het eindbedrag (met 15% korting) over en stuur daarna een bewijs in dezelfde e-mailthread.",
+      ];
+    case "pt":
+      return [
+        "Responda a este e-mail para confirmar o seu pedido.",
+        "Enviaremos os dados bancários numa resposta privada.",
+        "Faça a transferência do valor final com desconto e responda com o comprovativo no mesmo fio.",
+      ];
+    case "es":
+      return [
+        "Responde a este correo para confirmar tu pedido.",
+        "Te enviaremos los datos bancarios en una respuesta privada.",
+        "Realiza la transferencia del importe final con descuento y responde con el recibo en el mismo hilo.",
+      ];
+    case "no":
+      return [
+        "Svar på denne e-posten for å bekrefte bestillingen.",
+        "Vi sender bankdetaljene i et privat svar.",
+        "Overfør det endelige rabatterte beløpet, og svar med kvittering i samme tråd.",
+      ];
+    case "en":
+    default:
+      return [
+        "Reply to this email to confirm your order.",
+        "We will send your secure bank payment details in a private reply.",
+        "Pay the final discounted amount, then reply again with your receipt in the same thread.",
+      ];
+  }
+}
+
 function normalizeCountry(value: string): string {
   return value.toLowerCase().replace(/[^a-z\s]/g, "").replace(/\s+/g, " ").trim();
 }
@@ -810,6 +891,7 @@ function escapeHtml(s: string): string {
 
 export function buildBuyerOrderEmailHtml(p: BuyerOrderEmailParams): string {
   const t = COPY[p.locale];
+  const isBank = p.paymentMethod === "bank_transfer";
   const name = escapeHtml(p.fullName);
   const mail = escapeHtml(p.email);
   const country = escapeHtml(p.country);
@@ -818,10 +900,15 @@ export function buildBuyerOrderEmailHtml(p: BuyerOrderEmailParams): string {
   const discounted = escapeHtml(p.discountedPriceDisplay || "—");
   const inv = escapeHtml(p.invoiceRef);
   const methodLabel =
-    p.paymentMethod === "bank_transfer" ? t.methodBank : t.methodCrypto;
-  const ctaLabel =
-    p.paymentMethod === "bank_transfer" ? t.ctaBankLabel : t.ctaCryptoLabel;
+    isBank ? t.methodBank : t.methodCrypto;
+  const ctaLabel = t.ctaCryptoLabel;
   const detailsUrl = escapeHtml(p.paymentDetailsUrl);
+  const bankInstruction = escapeHtml(
+    bankTransferReplyInstruction(p.locale, p.fullName),
+  );
+  const [bankStep1, bankStep2, bankStep3] = bankTransferNextSteps(p.locale).map(
+    escapeHtml,
+  );
   const thanks = escapeHtml(withPlan(t.thanksLine, p.tierName));
   const paymentOptionsText = escapeHtml(
     withMethod(t.paymentOptionsText, methodLabel),
@@ -838,6 +925,137 @@ export function buildBuyerOrderEmailHtml(p: BuyerOrderEmailParams): string {
       : "";
   const refundUrl = `${origin}${localePrefix}/RefundPolicy`;
   const termsUrl = `${origin}${localePrefix}/TermsConditions`;
+
+  const introBlock = isBank
+    ? `<p style="margin:0 0 24px 0;font-size:15px;line-height:1.6;color:${C.text};">${bankInstruction}</p>`
+    : `<p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;color:${C.text};">${escapeHtml(t.greeting)} <strong>${name}</strong>,</p>
+            <p style="margin:0 0 24px 0;font-size:15px;line-height:1.6;color:${C.text};">${thanks}</p>`;
+
+  const paymentOptionsBlock = isBank
+    ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 20px 0;">
+              <tr>
+                <td style="padding:0 0 10px 0;">
+                  <p class="gf-email-heading" style="margin:0;font-size:20px;font-weight:800;color:${C.primaryDark};line-height:1.2;">${escapeHtml(t.paymentOptionsTitle)}</p>
+                </td>
+              </tr>
+              <tr>
+                <td class="gf-email-alert" style="background-color:${C.alertBg};border:1px solid ${C.alertBorder};border-radius:10px;padding:14px 16px;">
+                  <p style="margin:0 0 8px 0;font-size:14px;line-height:1.6;color:${C.text};"><strong>${escapeHtml(t.selectedMethodLabel)}:</strong> ${escapeHtml(methodLabel)}</p>
+                  <p style="margin:0;font-size:14px;line-height:1.6;color:${C.text};"><strong style="color:${C.primaryDark};">${escapeHtml(t.discountTitle)}:</strong> ${escapeHtml(t.discountText)}</p>
+                </td>
+              </tr>
+            </table>`
+    : `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 20px 0;">
+              <tr>
+                <td style="padding:0 0 10px 0;">
+                  <p class="gf-email-heading" style="margin:0;font-size:20px;font-weight:800;color:${C.primaryDark};line-height:1.2;">${escapeHtml(t.paymentOptionsTitle)}</p>
+                </td>
+              </tr>
+              <tr>
+                <td class="gf-email-alert" style="background-color:${C.alertBg};border:1px solid ${C.alertBorder};border-radius:10px;padding:14px 16px;">
+                  <p style="margin:0 0 8px 0;font-size:14px;line-height:1.6;color:${C.text};">${paymentOptionsText}</p>
+                  <p style="margin:0;font-size:14px;line-height:1.6;color:${C.text};"><strong style="color:${C.primaryDark};">${escapeHtml(t.discountTitle)}:</strong> ${escapeHtml(t.discountText)}</p>
+                </td>
+              </tr>
+            </table>`;
+
+  const ctaBlock = isBank
+    ? `<table role="presentation" class="gf-email-surface" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:${C.bgPage};border:1px solid ${C.border};border-radius:10px;margin:0 0 22px 0;">
+              <tr>
+                <td style="padding:16px 18px;">
+                  <p style="margin:0;font-size:14px;line-height:1.6;color:${C.text};"><strong style="color:${C.primaryDark};">${escapeHtml(t.replyTitle)}:</strong> ${bankInstruction}</p>
+                </td>
+              </tr>
+            </table>`
+    : `<!-- Conditional payment details CTA -->
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 12px auto;">
+              <tr>
+                <td class="gf-email-cta-wrap" style="border-radius:50px;background:linear-gradient(135deg,${C.primary} 0%,${C.primaryDark} 100%);background-color:${C.primaryDark};">
+                  <a href="${detailsUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:15px 30px;font-size:15px;font-weight:800;color:#ffffff;text-decoration:none;">${escapeHtml(ctaLabel)}</a>
+                </td>
+              </tr>
+            </table>
+            <p class="gf-email-muted" style="margin:0 0 22px 0;font-size:13px;color:${C.textGray};text-align:center;">${escapeHtml(t.fallbackLinkHelp)}<br/><a href="${detailsUrl}" style="color:${C.linkOnWhite};text-decoration:underline;word-break:break-all;">${detailsUrl}</a></p>`;
+
+  const nextStepsBlock = isBank
+    ? `<table role="presentation" class="gf-email-surface" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:${C.bgPage};border:1px solid ${C.border};border-radius:10px;margin-bottom:20px;">
+              <tr>
+                <td style="padding:14px 16px;border-bottom:1px solid ${C.border};">
+                  <p class="gf-email-heading" style="margin:0;font-size:14px;font-weight:700;color:${C.primaryDark};">${escapeHtml(t.nextStepsTitle)}</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:12px 16px;border-bottom:1px solid ${C.border};">
+                  <p style="margin:0;font-size:14px;line-height:1.55;color:${C.text};">${bankStep1}</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:12px 16px;border-bottom:1px solid ${C.border};">
+                  <p style="margin:0;font-size:14px;line-height:1.55;color:${C.text};">${bankStep2}</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:12px 16px;">
+                  <p style="margin:0;font-size:14px;line-height:1.55;color:${C.text};">${bankStep3}</p>
+                </td>
+              </tr>
+            </table>`
+    : `<table role="presentation" class="gf-email-surface" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:${C.bgPage};border:1px solid ${C.border};border-radius:10px;margin-bottom:20px;">
+              <tr>
+                <td style="padding:14px 16px;border-bottom:1px solid ${C.border};">
+                  <p class="gf-email-heading" style="margin:0;font-size:14px;font-weight:700;color:${C.primaryDark};">${escapeHtml(t.nextStepsTitle)}</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:12px 16px;border-bottom:1px solid ${C.border};">
+                  <p style="margin:0;font-size:14px;line-height:1.55;color:${C.text};">${escapeHtml(t.nextStep1)}</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:12px 16px;border-bottom:1px solid ${C.border};">
+                  <p style="margin:0;font-size:14px;line-height:1.55;color:${C.text};">${escapeHtml(t.nextStep2)}</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:12px 16px;">
+                  <p style="margin:0;font-size:14px;line-height:1.55;color:${C.text};">${escapeHtml(t.nextStep3)}</p>
+                </td>
+              </tr>
+            </table>`;
+
+  const calloutsBlock = isBank
+    ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:28px;">
+              <tr>
+                <td class="gf-email-callout-green" style="background-color:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:13px 14px 12px 14px;">
+                  <p style="margin:0;font-size:13px;line-height:1.6;color:${C.text};"><strong style="color:#166534;">${escapeHtml(t.deliveryTitle)}</strong> ${escapeHtml(t.deliveryText)}</p>
+                </td>
+              </tr>
+              <tr><td style="height:10px;line-height:10px;font-size:10px;">&nbsp;</td></tr>
+              <tr>
+                <td class="gf-email-alert" style="background-color:${C.alertBg};border:1px solid ${C.alertBorder};border-radius:10px;padding:13px 14px 12px 14px;">
+                  <p style="margin:0;font-size:13px;line-height:1.6;color:${C.text};"><strong style="color:${C.primaryDark};">${escapeHtml(t.supportTitle)}</strong> ${escapeHtml(t.supportText)}</p>
+                </td>
+              </tr>
+            </table>`
+    : `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:28px;">
+              <tr>
+                <td class="gf-email-callout-cyan" style="background-color:#ecfeff;border:1px solid #67e8f9;border-radius:10px;padding:13px 14px 12px 14px;">
+                  <p style="margin:0;font-size:13px;line-height:1.6;color:${C.text};"><strong style="color:#0e7490;">${escapeHtml(t.replyTitle)}:</strong> ${replyText}</p>
+                </td>
+              </tr>
+              <tr><td style="height:10px;line-height:10px;font-size:10px;">&nbsp;</td></tr>
+              <tr>
+                <td class="gf-email-callout-green" style="background-color:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:13px 14px 12px 14px;">
+                  <p style="margin:0;font-size:13px;line-height:1.6;color:${C.text};"><strong style="color:#166534;">${escapeHtml(t.deliveryTitle)}</strong> ${escapeHtml(t.deliveryText)}</p>
+                </td>
+              </tr>
+              <tr><td style="height:10px;line-height:10px;font-size:10px;">&nbsp;</td></tr>
+              <tr>
+                <td class="gf-email-alert" style="background-color:${C.alertBg};border:1px solid ${C.alertBorder};border-radius:10px;padding:13px 14px 12px 14px;">
+                  <p style="margin:0;font-size:13px;line-height:1.6;color:${C.text};"><strong style="color:${C.primaryDark};">${escapeHtml(t.supportTitle)}</strong> ${escapeHtml(t.supportText)}</p>
+                </td>
+              </tr>
+            </table>`;
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -859,14 +1077,13 @@ ${EMAIL_DARK_MODE_STYLE}
         <tr>
           <td class="gf-email-header" style="background:linear-gradient(135deg,${C.primary} 0%,${C.primaryDark} 100%);background-color:${C.primaryDark};padding:28px 32px;text-align:center;">
             <p style="margin:0 0 8px 0;font-size:11px;font-weight:600;letter-spacing:0.12em;color:${C.headerSub};text-transform:uppercase;">${escapeHtml(t.headerEyebrow)}</p>
-            <p style="margin:0 0 10px 0;font-size:28px;font-weight:700;color:#ffffff;font-family:Georgia,'Times New Roman',Times,serif;line-height:1.2;">GiGa FliX</p>
+            <p style="margin:0 0 10px 0;font-size:28px;font-weight:700;color:#ffffff;font-family:Georgia,'Times New Roman',Times,serif;line-height:1.2;">IPTV Headend</p>
             <p style="margin:0;font-size:13px;color:${C.headerInvoice};">${escapeHtml(t.orderReference)}: <strong style="color:#ffffff;">${inv}</strong></p>
           </td>
         </tr>
         <tr>
           <td class="gf-email-main" style="padding:28px 32px 8px 32px;">
-            <p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;color:${C.text};">${escapeHtml(t.greeting)} <strong>${name}</strong>,</p>
-            <p style="margin:0 0 24px 0;font-size:15px;line-height:1.6;color:${C.text};">${thanks}</p>
+            ${introBlock}
             <table role="presentation" class="gf-email-surface" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:${C.bgPage};border:1px solid ${C.border};border-radius:10px;margin-bottom:20px;">
               <tr>
                 <td style="padding:16px 18px;">
@@ -879,19 +1096,7 @@ ${EMAIL_DARK_MODE_STYLE}
               </tr>
             </table>
 
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 20px 0;">
-              <tr>
-                <td style="padding:0 0 10px 0;">
-                  <p class="gf-email-heading" style="margin:0;font-size:20px;font-weight:800;color:${C.primaryDark};line-height:1.2;">${escapeHtml(t.paymentOptionsTitle)}</p>
-                </td>
-              </tr>
-              <tr>
-                <td class="gf-email-alert" style="background-color:${C.alertBg};border:1px solid ${C.alertBorder};border-radius:10px;padding:14px 16px;">
-                  <p style="margin:0 0 8px 0;font-size:14px;line-height:1.6;color:${C.text};">${paymentOptionsText}</p>
-                  <p style="margin:0;font-size:14px;line-height:1.6;color:${C.text};"><strong style="color:${C.primaryDark};">${escapeHtml(t.discountTitle)}:</strong> ${escapeHtml(t.discountText)}</p>
-                </td>
-              </tr>
-            </table>
+            ${paymentOptionsBlock}
 
             <table role="presentation" class="gf-email-surface" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:${C.bgPage};border:1px solid ${C.border};border-radius:10px;margin-bottom:20px;">
               <tr>
@@ -918,58 +1123,11 @@ ${EMAIL_DARK_MODE_STYLE}
               </tr>
             </table>
 
-            <!-- Conditional payment details CTA -->
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 12px auto;">
-              <tr>
-                <td class="gf-email-cta-wrap" style="border-radius:50px;background:linear-gradient(135deg,${C.primary} 0%,${C.primaryDark} 100%);background-color:${C.primaryDark};">
-                  <a href="${detailsUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:15px 30px;font-size:15px;font-weight:800;color:#ffffff;text-decoration:none;">${escapeHtml(ctaLabel)}</a>
-                </td>
-              </tr>
-            </table>
-            <p class="gf-email-muted" style="margin:0 0 22px 0;font-size:13px;color:${C.textGray};text-align:center;">${escapeHtml(t.fallbackLinkHelp)}<br/><a href="${detailsUrl}" style="color:${C.linkOnWhite};text-decoration:underline;word-break:break-all;">${detailsUrl}</a></p>
+            ${ctaBlock}
 
-            <table role="presentation" class="gf-email-surface" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:${C.bgPage};border:1px solid ${C.border};border-radius:10px;margin-bottom:20px;">
-              <tr>
-                <td style="padding:14px 16px;border-bottom:1px solid ${C.border};">
-                  <p class="gf-email-heading" style="margin:0;font-size:14px;font-weight:700;color:${C.primaryDark};">${escapeHtml(t.nextStepsTitle)}</p>
-                </td>
-              </tr>
-              <tr>
-                <td style="padding:12px 16px;border-bottom:1px solid ${C.border};">
-                  <p style="margin:0;font-size:14px;line-height:1.55;color:${C.text};">${escapeHtml(t.nextStep1)}</p>
-                </td>
-              </tr>
-              <tr>
-                <td style="padding:12px 16px;border-bottom:1px solid ${C.border};">
-                  <p style="margin:0;font-size:14px;line-height:1.55;color:${C.text};">${escapeHtml(t.nextStep2)}</p>
-                </td>
-              </tr>
-              <tr>
-                <td style="padding:12px 16px;">
-                  <p style="margin:0;font-size:14px;line-height:1.55;color:${C.text};">${escapeHtml(t.nextStep3)}</p>
-                </td>
-              </tr>
-            </table>
+            ${nextStepsBlock}
 
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:28px;">
-              <tr>
-                <td class="gf-email-callout-cyan" style="background-color:#ecfeff;border:1px solid #67e8f9;border-radius:10px;padding:13px 14px 12px 14px;">
-                  <p style="margin:0;font-size:13px;line-height:1.6;color:${C.text};"><strong style="color:#0e7490;">${escapeHtml(t.replyTitle)}:</strong> ${replyText}</p>
-                </td>
-              </tr>
-              <tr><td style="height:10px;line-height:10px;font-size:10px;">&nbsp;</td></tr>
-              <tr>
-                <td class="gf-email-callout-green" style="background-color:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:13px 14px 12px 14px;">
-                  <p style="margin:0;font-size:13px;line-height:1.6;color:${C.text};"><strong style="color:#166534;">${escapeHtml(t.deliveryTitle)}</strong> ${escapeHtml(t.deliveryText)}</p>
-                </td>
-              </tr>
-              <tr><td style="height:10px;line-height:10px;font-size:10px;">&nbsp;</td></tr>
-              <tr>
-                <td class="gf-email-alert" style="background-color:${C.alertBg};border:1px solid ${C.alertBorder};border-radius:10px;padding:13px 14px 12px 14px;">
-                  <p style="margin:0;font-size:13px;line-height:1.6;color:${C.text};"><strong style="color:${C.primaryDark};">${escapeHtml(t.supportTitle)}</strong> ${escapeHtml(t.supportText)}</p>
-                </td>
-              </tr>
-            </table>
+            ${calloutsBlock}
 
             <p class="gf-email-muted" style="margin:0 0 0 0;font-size:13px;line-height:1.5;color:${C.textGray};">${escapeHtml(t.spamReminder)}</p>
           </td>
@@ -1006,8 +1164,36 @@ export function buildBuyerOrderEmailText(
   >,
 ): string {
   const t = COPY[p.locale];
-  const methodLabel =
-    p.paymentMethod === "bank_transfer" ? t.methodBank : t.methodCrypto;
+  const isBank = p.paymentMethod === "bank_transfer";
+  const methodLabel = isBank ? t.methodBank : t.methodCrypto;
+
+  if (isBank) {
+    const [s1, s2, s3] = bankTransferNextSteps(p.locale);
+    return `${bankTransferReplyInstruction(p.locale, p.fullName)}
+
+${withMethod(t.plainPaymentOptions, methodLabel)}
+
+${t.plainDiscount}
+
+${t.plainPlan}: ${p.tierName}
+${t.plainListedPrice}: ${p.listedPriceDisplay || "—"}
+${t.plainFinalPrice}: ${p.discountedPriceDisplay || "—"}
+
+${t.nextStepsTitle}:
+1. ${s1}
+2. ${s2}
+3. ${s3}
+
+${t.plainDelivery}
+
+${t.plainOrderReference}: ${p.invoiceRef}
+
+${t.plainSpamCheck}
+
+${t.plainIgnoreNotice}
+
+— IPTV Headend`;
+  }
 
   return `${t.plainHello} ${p.fullName},
 
@@ -1033,7 +1219,7 @@ ${t.plainSpamCheck}
 
 ${t.plainIgnoreNotice}
 
-— GiGa FliX`;
+— IPTV Headend`;
 }
 
 export function generateInvoiceRef(): string {

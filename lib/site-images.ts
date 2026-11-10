@@ -1,11 +1,11 @@
-const SITE_ORIGIN = "https://gigaflixiptv.com";
+const SITE_ORIGIN = "https://iptvheadend.net";
 
 /**
  * Hero: public/img/{HERO_FILENAME}. When you replace the file in place, raise
  * HERO_IMAGE_CACHE_BUST so the URL changes and caches refresh.
  */
 const HERO_FILENAME = "hero_sports_center_clean_1769521080817.png";
-export const HERO_IMAGE_CACHE_BUST = "4";
+export const HERO_IMAGE_CACHE_BUST = "10";
 export const heroImageSrc = `/img/${HERO_FILENAME}?v=${HERO_IMAGE_CACHE_BUST}`;
 
 /**
@@ -21,11 +21,11 @@ export const HERO_IMAGE_SIZES =
  * same `?v=` in public/guide/index.html (two places).
  */
 const LOGO_FILENAME = "logo.png";
-export const LOGO_IMAGE_CACHE_BUST = "7";
+export const LOGO_IMAGE_CACHE_BUST = "8";
 export const logoImageSrc = `/img/${LOGO_FILENAME}?v=${LOGO_IMAGE_CACHE_BUST}`;
 
 /** Sports section image: public/img/sports/football.png — bump when you replace the file in place. */
-export const SPORTS_FOOTBALL_CACHE_BUST = "1";
+export const SPORTS_FOOTBALL_CACHE_BUST = "4";
 export const sportsFootballImageSrc = `/img/sports/football.png?v=${SPORTS_FOOTBALL_CACHE_BUST}`;
 
 /** Payment methods strip: public/img/payments.png */

@@ -1,5 +1,9 @@
 /**
- * Live destination account details shown on /pay/bank and /pay/crypto.
+ * Destination account details.
+ *
+ * CRYPTO_PAYMENT_DETAILS — used on the public /pay/crypto page (automated flow).
+ * BANK_PAYMENT_DETAILS — private reference only. Do NOT render on public pages or
+ * in automated buyer emails; bank credentials are sent manually after the customer replies.
  */
 
 export const BANK_PAYMENT_DETAILS = {

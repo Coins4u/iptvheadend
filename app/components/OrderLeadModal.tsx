@@ -129,6 +129,7 @@ export default function OrderLeadModal(_props: Props) {
     fullName: string;
     email: string;
     discountedPriceDisplay: string | null;
+    paymentMethod: SelectablePaymentMethod;
     paymentMethodLabel: string;
   } | null>(null);
 
@@ -239,6 +240,7 @@ export default function OrderLeadModal(_props: Props) {
           data.discountedPriceDisplay ??
           localPrices?.discountedDisplay ??
           null,
+        paymentMethod,
         paymentMethodLabel: PAYMENT_METHOD_LABELS[paymentMethod],
       });
     } catch {
@@ -279,13 +281,28 @@ export default function OrderLeadModal(_props: Props) {
               Thank you
             </h2>
             <p>
-              Thank you, {success.fullName}. We emailed {success.email} with
-              your {success.paymentMethodLabel.toLowerCase()} payment details
-              link
-              {success.discountedPriceDisplay
-                ? ` — your final price with 15% off is ${success.discountedPriceDisplay}`
-                : " and a 15% discount"}
-              . Open that email and use the button to complete payment.
+              {success.paymentMethod === "bank_transfer" ? (
+                <>
+                  Thank you, {success.fullName}. We emailed {success.email} with
+                  your bank transfer order confirmation
+                  {success.discountedPriceDisplay
+                    ? ` — your final price with 15% off is ${success.discountedPriceDisplay}`
+                    : " and a 15% discount"}
+                  . Please <strong>reply directly to that email</strong> to
+                  confirm your order and receive your secure bank payment
+                  details.
+                </>
+              ) : (
+                <>
+                  Thank you, {success.fullName}. We emailed {success.email} with
+                  your {success.paymentMethodLabel.toLowerCase()} payment details
+                  link
+                  {success.discountedPriceDisplay
+                    ? ` — your final price with 15% off is ${success.discountedPriceDisplay}`
+                    : " and a 15% discount"}
+                  . Open that email and use the button to complete payment.
+                </>
+              )}
             </p>
             <button
               type="button"

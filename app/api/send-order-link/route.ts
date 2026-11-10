@@ -26,11 +26,18 @@ type Body = {
 };
 
 function normalizeSiteOrigin(raw: string | undefined): string {
-  const fallback = "https://gigaflixiptv.com";
+  const fallback = "https://iptvheadend.net";
   const value = (raw || "").trim();
   if (!value) return fallback;
   if (/^https?:\/\//i.test(value)) return value.replace(/\/$/, "");
   return `https://${value.replace(/\/$/, "")}`;
+}
+
+/** Extract bare email from `Name <email@x.com>` or plain address. */
+function extractEmailAddress(fromOrEmail: string): string {
+  const angle = fromOrEmail.match(/<([^>]+)>/);
+  if (angle?.[1]) return angle[1].trim();
+  return fromOrEmail.trim();
 }
 
 function buildTransporter() {
@@ -127,12 +134,17 @@ export async function POST(request: Request) {
     const siteOrigin = normalizeSiteOrigin(process.env.NEXT_PUBLIC_SITE_URL);
     const invoiceRef = generateInvoiceRef();
     const locale = resolveBuyerLocaleFromCountry(country);
-    const paymentDetailsUrl = getPaymentDetailsUrl(selectedPaymentMethod, {
-      siteOrigin,
-      plan: tierName,
-      amount: discountedAmount,
-      invoiceRef,
-    });
+    const isBankTransfer = selectedPaymentMethod === "bank_transfer";
+    // Crypto keeps the automated payment-page CTA. Bank transfer emails ask the
+    // customer to reply instead — never link to public IBAN details.
+    const paymentDetailsUrl = isBankTransfer
+      ? ""
+      : getPaymentDetailsUrl(selectedPaymentMethod, {
+          siteOrigin,
+          plan: tierName,
+          amount: discountedAmount,
+          invoiceRef,
+        });
 
     const buyerSubject = getBuyerEmailSubject(tierName, invoiceRef, locale);
     const buyerHtml = buildBuyerOrderEmailHtml({
@@ -160,24 +172,42 @@ export async function POST(request: Request) {
       paymentDetailsUrl,
     });
 
+    const replyInbox = extractEmailAddress(from);
     const adminSubject = `NEW FORM FILLED: ${tierName} - ${fullName}`;
-    const adminText = [
-      "A user has filled the order form.",
-      `Name: ${fullName}`,
-      `Email: ${email}`,
-      `Country: ${country}`,
-      `Tier Selected: ${tierName}`,
-      `Payment Method: ${paymentMethodLabel}`,
-      `Listed price: ${listedPriceDisplay}`,
-      `Discounted price (15% off bank transfer / crypto): ${discountedPriceDisplay}`,
-      `Status: Payment details follow-up email sent to the buyer (${paymentMethodLabel}).`,
-      `Payment page: ${paymentDetailsUrl}`,
-    ].join("\n");
+    const adminText = isBankTransfer
+      ? [
+          "A user has filled the order form (BANK TRANSFER).",
+          `Name: ${fullName}`,
+          `Email: ${email}`,
+          `Country: ${country}`,
+          `Tier Selected: ${tierName}`,
+          `Payment Method: ${paymentMethodLabel}`,
+          `Listed price: ${listedPriceDisplay}`,
+          `Discounted price (15% off): ${discountedPriceDisplay}`,
+          `Order reference: ${invoiceRef}`,
+          `Status: Buyer was asked to REPLY to the order email for secure bank details (no IBAN sent).`,
+          `Action: When they reply to ${replyInbox}, review the order and send bank credentials privately in that thread.`,
+        ].join("\n")
+      : [
+          "A user has filled the order form.",
+          `Name: ${fullName}`,
+          `Email: ${email}`,
+          `Country: ${country}`,
+          `Tier Selected: ${tierName}`,
+          `Payment Method: ${paymentMethodLabel}`,
+          `Listed price: ${listedPriceDisplay}`,
+          `Discounted price (15% off bank transfer / crypto): ${discountedPriceDisplay}`,
+          `Status: Payment details follow-up email sent to the buyer (${paymentMethodLabel}).`,
+          `Payment page: ${paymentDetailsUrl}`,
+        ].join("\n");
 
     await Promise.all([
       transporter.sendMail({
         from,
         to: email,
+        // Bank replies must land in the same inbox you use for order mail so you
+        // can send IBAN privately. Crypto also replies here for receipt matching.
+        replyTo: replyInbox,
         subject: buyerSubject,
         text: buyerText,
         html: buyerHtml,

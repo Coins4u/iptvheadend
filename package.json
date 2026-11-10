@@ -12,7 +12,7 @@
     "lint": "eslint"
   },
   "engines": {
-    "node": "20.x"
+    "node": "26.x"
   },
   "dependencies": {
     "@mantine/carousel": "^9.1.0",

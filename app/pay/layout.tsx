@@ -14,7 +14,7 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, them
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  icons: { icon: "/img/favicon.png" },
+  icons: { icon: [{ url: "/favicon.ico", sizes: "48x48" }, { url: "/img/favicon.png", type: "image/png", sizes: "192x192" }], apple: "/img/apple-touch-icon.png" },
   robots: { index: false, follow: false },
 };
 

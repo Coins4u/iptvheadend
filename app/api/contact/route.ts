@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Server email configuration error" }, { status: 500 });
   }
 
-  const to = "giga.flix.iptv@gmail.com";
+  const to = process.env.CONTACT_EMAIL?.trim() || "support.iptv.headend@gmail.com";
   const subject = `New contact message: ${name}`;
   const text = `New contact message received.
 

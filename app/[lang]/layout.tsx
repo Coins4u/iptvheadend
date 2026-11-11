@@ -21,7 +21,13 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   applicationName: SITE_NAME,
-  icons: { icon: "/img/favicon.png", apple: "/img/favicon.png" },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/img/favicon.png", type: "image/png", sizes: "192x192" },
+    ],
+    apple: { url: "/img/apple-touch-icon.png", sizes: "180x180" },
+  },
   formatDetection: { telephone: false },
   robots: {
     index: true,

@@ -2,8 +2,8 @@
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_SECURE=false
-SMTP_USER=giga.flix.iptv@gmail.com
-SMTP_PASS=nzjacfvpaklgcdjq
-SMTP_FROM="IPTV Headend <giga.flix.iptv@gmail.com>"
-ADMIN_EMAIL=essadik921@gmail.com
+SMTP_USER=support.iptv.headend@gmail.com
+SMTP_PASS=ydjqizzkceqndiix
+SMTP_FROM="IPTV Headend <support.iptv.headend@gmail.com>"
+ADMIN_EMAIL=support.iptv.headend@gmail.com
 
